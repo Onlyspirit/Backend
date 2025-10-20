@@ -1,5 +1,5 @@
 <?php
-require('config.php');
+require('index.php');
 
 // Set response type to JSON
 header("Content-Type: application/json; charset=UTF-8");
@@ -44,4 +44,3 @@ if ($result) {
         'error' => mysqli_error($server_connection)
     ]);
 }
-?>

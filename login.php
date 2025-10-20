@@ -1,5 +1,5 @@
 <?php
-require('config.php');
+require('index.php');
 require 'vendor/autoload.php';
 
 use \Firebase\JWT\JWT;

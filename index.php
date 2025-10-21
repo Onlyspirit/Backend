@@ -2,7 +2,7 @@
 // Allow CORS from both localhost (for dev) and Render (for production)
 $allowed_origins = [
     "http://localhost:4200",            // your Angular dev server
-    "https://your-frontend.onrender.com" // your deployed frontend
+    "https://moscholar.vercel.app/landing" // your deployed frontend
 ];
 
 // Dynamically set CORS header based on request origin

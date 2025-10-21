@@ -2,45 +2,48 @@
 require('index.php');
 
 // Set response type to JSON
+header("Access-Control-Allow-Origin: http://localhost:4200");
 header("Content-Type: application/json; charset=UTF-8");
 
 // Get JSON input
-$data = json_decode(file_get_contents('php://input'));
+$data = json_decode(file_get_contents('php://input'), true);
 
-// Extract fields
-$Firstname = trim($data->Firstname ?? '');
-$Lastname  = trim($data->Lastname ?? '');
-$Email     = trim($data->email ?? '');
-$password  = $data->password ?? '';
-$role      = trim($data->role ?? '');
+// Extract and trim fields
+$Firstname = trim($data['Firstname'] ?? '');
+$Lastname  = trim($data['Lastname'] ?? '');
+$Email     = trim($data['email'] ?? '');
+$password  = $data['password'] ?? '';
+$role      = trim($data['role'] ?? '');
 
-// ✅ Validate BEFORE inserting
+// Validate fields
 if (empty($Firstname) || empty($Lastname) || empty($Email) || empty($password) || empty($role)) {
     echo json_encode(['message' => 'All fields are required']);
     exit;
 }
 
-// ✅ Optional: check for duplicate email
-$check = mysqli_query($server_connection, "SELECT * FROM users WHERE Email='$Email'");
-if (mysqli_num_rows($check) > 0) {
+// Check duplicate email with prepared statement
+$stmt = mysqli_prepare($server_connection, "SELECT * FROM users WHERE Email = ?");
+mysqli_stmt_bind_param($stmt, "s", $Email);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+if (mysqli_num_rows($result) > 0) {
     echo json_encode(['message' => 'This email is already registered']);
     exit;
 }
 
-// ✅ Hash password
+// Hash password
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-// ✅ Insert user
-$query = "INSERT INTO users (Firstname, Lastname, Email, Password, Role)
-          VALUES ('$Firstname', '$Lastname', '$Email', '$hashedPassword', '$role')";
-
-$result = mysqli_query($server_connection, $query);
+// Insert user with prepared statement
+$stmt = mysqli_prepare($server_connection, "INSERT INTO users (Firstname, Lastname, Email, Password, Role) VALUES (?, ?, ?, ?, ?)");
+mysqli_stmt_bind_param($stmt, "sssss", $Firstname, $Lastname, $Email, $hashedPassword, $role);
+$result = mysqli_stmt_execute($stmt);
 
 if ($result) {
     echo json_encode(['message' => 'User registered successfully']);
 } else {
-    echo json_encode([
-        'message' => 'Database error',
-        'error' => mysqli_error($server_connection)
-    ]);
+    echo json_encode(['message' => 'Database error', 'error' => mysqli_error($server_connection)]);
 }
+
+mysqli_close($server_connection);
+?>
